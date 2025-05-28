@@ -1,15 +1,8 @@
-# Python module for FROS-GUI
+# Python module for structs to ROS msg convertion
 
 
 
 # Instructions to build 
-
-Clone this repository inside the directory 'my_module' 
-
-
-```sh
-cd stm_converter/
-```
 
 ```sh
 python setup.py bdist_wheel sdist
