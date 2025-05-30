@@ -23,14 +23,12 @@ class xmlParser:
         self.namespaces = self.global_namespace.namespaces()
 
         if namespace:
-            print("namespace given")
             self.ns = self.global_namespace.namespace(namespace)
 
         else:
-            print("no namespace given")
             user_ns = None
             for ns in self.namespaces:
-                print(f"namespace = {ns.name}")
+                # print(f"namespace = {ns.name}")
                 user_ns = ns.name
 
             self.ns = self.global_namespace.namespace(user_ns)
@@ -41,7 +39,7 @@ class xmlParser:
             # if isinstance(decl, declarations.opaque_type_t):
             #     print("opaque")
             if isinstance(decl, declarations.class_t):
-                print(f"declaration name = {decl.name}")
+                # print(f"declaration name = {decl.name}")
                 if str(decl.name).startswith("_"): continue
                 # print(f"decl type = {decl.decl_type}")
                 # MyConfigData = decl
@@ -49,9 +47,9 @@ class xmlParser:
 
                 for var in decl.variables():
                     # print(decl.variables())
-                    print("decl_name: " + decl.name)
-                    print("My name is: " + var.name)
-                    print("My type is: " + str(var.decl_type))
+                    # print("decl_name: " + decl.name)
+                    # print("My name is: " + var.name)
+                    # print("My type is: " + str(var.decl_type))
                     var_type = ""
 
                     if type(var.decl_type) == declarations.cpptypes.int_t:
@@ -62,10 +60,10 @@ class xmlParser:
                     elif str(var.decl_type).startswith("std::vector<"):
                         var_type = str(var.decl_type).strip("std::vector<").strip(">") + "[]"
 
-                    print(type(var.decl_type))
+                    # print(type(var.decl_type))
                     temp[decl.name].update({var.name: var_type})
 
                 self.structs.update(temp)
 
-        print(f"structs_found = {self.structs}")
+        # print(f"structs_found = {self.structs}")
         return self.structs
