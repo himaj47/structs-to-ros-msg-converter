@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 from stm_converter.xml_parser import xmlParser
 from stm_converter.ros_msg_generator import ROSMsgGenerator
 
@@ -11,6 +12,9 @@ def main():
 
     args = parser.parse_args()
 
+    path = Path(str(args.filename))
+    filename = path.stem
+
     namespace = ""
 
     if args.namespace:
@@ -18,9 +22,10 @@ def main():
 
     xml_parser = xmlParser(str(args.filename), namespace)
     structs_found = xml_parser.get_decls()
-
-    msg_gen = ROSMsgGenerator(structs_found)
+    
+    msg_gen = ROSMsgGenerator(structs_found, filename)
     msg_gen.gen_msgs()
+    msg_gen.gen_type_adapter()
 
 if __name__ == "__main__":
     main()

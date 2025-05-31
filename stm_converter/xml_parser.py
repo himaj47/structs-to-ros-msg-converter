@@ -15,6 +15,7 @@ class xmlParser:
         self.filename = filename
         self.namespace = namespace
         self.ns = ""
+        self.stuct_name = ""
 
         self.structs = {}
 
@@ -44,6 +45,7 @@ class xmlParser:
                 # print(f"decl type = {decl.decl_type}")
                 # MyConfigData = decl
                 temp = {decl.name: {}}
+                self.stuct_name = decl.name
 
                 for var in decl.variables():
                     # print(decl.variables())
