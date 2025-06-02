@@ -14,7 +14,8 @@ class xmlParser:
         
         self.filename = filename
         self.namespace = namespace
-        self.ns = ""
+        self.ns = None
+        self.user_ns = ""
         self.stuct_name = ""
 
         self.structs = {}
@@ -27,12 +28,11 @@ class xmlParser:
             self.ns = self.global_namespace.namespace(namespace)
 
         else:
-            user_ns = None
             for ns in self.namespaces:
                 # print(f"namespace = {ns.name}")
-                user_ns = ns.name
+                self.user_ns = ns.name
 
-            self.ns = self.global_namespace.namespace(user_ns)
+            self.ns = self.global_namespace.namespace(self.user_ns)
 
     def get_decls(self):
         for decl in self.ns.declarations:
@@ -59,6 +59,8 @@ class xmlParser:
                         var_type = "Int"
                     elif type(var.decl_type) == declarations.cpptypes.float_t:
                         var_type = "Float"
+                    elif type(var.decl_type) == declarations.cpptypes.bool_t:
+                        var_type = "bool"
                     elif str(var.decl_type).startswith("std::vector<"):
                         var_type = str(var.decl_type).strip("std::vector<").strip(">") + "[]"
 
