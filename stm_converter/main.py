@@ -23,7 +23,7 @@ def main():
     xml_parser = xmlParser(str(args.filename), namespace)
     structs_found = xml_parser.get_decls()
     
-    msg_gen = ROSMsgGenerator(structs_found, filename)
+    msg_gen = ROSMsgGenerator(structs_found, filename, xml_parser.user_ns)
     msg_gen.gen_msgs()
     msg_gen.gen_type_adapter()
 
