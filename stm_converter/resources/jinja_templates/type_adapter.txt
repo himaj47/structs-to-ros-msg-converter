@@ -1,12 +1,12 @@
 #include <rclcpp/type_adapter.hpp>
-#include "my_custom_interfaces/msg/{{struct_name}}.hpp"
+#include "my_custom_interfaces/msg/{{header}}.hpp"
 #include "{{header}}.hpp"
 
 template<>
 struct rclcpp::TypeAdapter<{{namespace}}::{{struct_name}}, my_custom_interfaces::msg::{{msg_file_name}}>
 {
   using is_specialized = std::true_type;
-  using custom_type = {{struct_name}};
+  using custom_type = {{namespace}}::{{struct_name}};
   using ros_message_type = my_custom_interfaces::msg::{{msg_file_name}};
 
   static
