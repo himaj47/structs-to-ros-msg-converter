@@ -1,6 +1,8 @@
 from pygccxml import utils
 from pygccxml import declarations
 from pygccxml import parser
+# from rosidl_parser.definition import 
+from stm_converter.message_specification import MessageSpecification, BasicType, Field, BASIC_TYPES
 
 class xmlParser:
     def __init__(self, filename, namespace=""):
@@ -16,7 +18,7 @@ class xmlParser:
         self.namespace = namespace
         self.ns = None
         self.user_ns = ""
-        self.stuct_name = ""
+        self.struct_name = ""
 
         self.structs = {}
 
@@ -24,6 +26,7 @@ class xmlParser:
         self.global_namespace = declarations.get_global_namespace(self.decls)
         self.namespaces = self.global_namespace.namespaces()
 
+        # if namespace provided by the user
         if namespace:
             self.ns = self.global_namespace.namespace(namespace)
 
@@ -35,6 +38,8 @@ class xmlParser:
             self.ns = self.global_namespace.namespace(self.user_ns)
 
     def get_decls(self):
+        msg = MessageSpecification("msg")
+        not_primitive_type = []
         for decl in self.ns.declarations:
             # if decl.name == "MyConfigData":
             # if isinstance(decl, declarations.opaque_type_t):
@@ -45,7 +50,9 @@ class xmlParser:
                 # print(f"decl type = {decl.decl_type}")
                 # MyConfigData = decl
                 temp = {decl.name: {}}
-                self.stuct_name = decl.name
+                # self.struct_name = decl.name
+                msg.msg_name_ = decl.name.title()
+                msg.struct_name_ = decl.name
 
                 for var in decl.variables():
                     # print(decl.variables())
@@ -53,21 +60,37 @@ class xmlParser:
                     # print("My name is: " + var.name)
                     # print("My type is: " + str(var.decl_type))
                     var_type = ""
+                    field = None
 
+                    # use isinstance() instead of type()
                     if type(var.decl_type) == declarations.cpptypes.int_t:
                         # declarations.is_integral(var.decl_type)
-                        var_type = "Int"
+                        var_type = "int64"
+                        field = Field(var.name, BasicType('int64'))
                     elif type(var.decl_type) == declarations.cpptypes.float_t:
-                        var_type = "Float"
+                        var_type = "float64"
+                        field = Field(var.name, BasicType('float64'))
                     elif type(var.decl_type) == declarations.cpptypes.bool_t:
                         var_type = "bool"
+                        field = Field(var.name, BasicType('bool'))
                     elif str(var.decl_type).startswith("std::vector<"):
-                        var_type = str(var.decl_type).strip("std::vector<").strip(">") + "[]"
+                        var_type = str(var.decl_type).strip("std::vector<").strip(">")
+                        if var_type+'64' in BASIC_TYPES:
+                            field = Field(var.name, BasicType(var_type+'64'), is_array=True)
+                            var_type += "64[]"
+                        else:
+                            # assuming it to be namespaced typed
+                            field = Field(var.name, BasicType(var_type), is_array=True)
+                            var_type += "[]"
+
+                    else:
+                        print(f"weird type found - {var.decl_type}")
 
                     # print(type(var.decl_type))
                     temp[decl.name].update({var.name: var_type})
+                    msg.set_field(field)
 
                 self.structs.update(temp)
 
         # print(f"structs_found = {self.structs}")
-        return self.structs
+        return self.structs, msg
