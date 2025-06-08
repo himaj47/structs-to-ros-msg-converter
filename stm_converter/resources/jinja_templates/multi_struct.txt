@@ -1,5 +1,0 @@
-{%- for msg_name, msg_type in msg.items() %}
-{{- msg_type}} {{msg_name}}{{"\n"}}
-{%- endfor %}
-
-

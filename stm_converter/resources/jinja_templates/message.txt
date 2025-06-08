@@ -1,5 +1,7 @@
-{%- for msg_name, msg_type in msg.items() %}
-{{- msg_type}} {{msg_name}}{{"\n"}}
+{%- for field_name, field_specs in msg.items() %}
+{%- if field_specs[1] %}
+{{- field_specs[0]}}[] {{field_name}}{{"\n"}}
+{%- else %}
+{{- field_specs[0]}} {{field_name}}{{"\n"}}
+{%- endif %}
 {%- endfor %}
-
-
