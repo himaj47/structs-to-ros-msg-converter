@@ -47,7 +47,7 @@ class BasicType:
             if "msg/" + msg in msgs:
                 # print(pkg) 
                 is_present = True
-                self.typename_ = f"{pkg}/msg/{msg}"
+                self.typename_ = f"{pkg}/{msg}"
                 print(f"interface found = {self.typename_}")
 
         if not is_present:
@@ -57,7 +57,7 @@ class BasicType:
             for root, dirs, files in walk(getcwd()):
                 if filename in files:
                     is_present = True
-                    self.typename_ = f"<interface_name>/msg/{msg}"
+                    self.typename_ = f"<interface_name>/{msg}"
                 else:
                     print(f"first need to create a msg file {filename}")
                     self.typename_ = type
@@ -138,7 +138,8 @@ def main():
     # print(point.get_fields())
 
     # is_primitive_type = BasicType("")
-    print("ns::point".split("::"))
+    # print("ns::point".split("::"))
+    # print(list(interface.get_interface_packages().keys()))
 
 if __name__ == '__main__':
     main()
