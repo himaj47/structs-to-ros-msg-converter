@@ -2,7 +2,75 @@ from pygccxml import utils
 from pygccxml import declarations
 from pygccxml import parser
 # from rosidl_parser.definition import 
-from stm_converter.message_specification import MessageSpecification, BasicType, Field, BASIC_TYPES
+# from stm_converter.message_specification import MessageSpecification, BasicType, Field, BASIC_TYPES
+from rosidl_adapter.parser import MessageSpecification, Type, Field, PRIMITIVE_TYPES
+import ros2interface.api as interface
+
+from os import getcwd, walk
+
+VECTOR_TYPE_PREFIX = "std::vector<"
+VECTOR_TYPE_SUFFIX = ">"
+STRUCT_NAME_SEPARATOR = "_"
+DECLARATION_PREFIX = "_"
+MESSAGE_FILE_EXTENSION = ".msg"
+SCOPE_RESOLUTION_OPR = "::"
+
+def generate_msg_name(msg_name: str):
+    processed_msg_name = ''
+
+    if msg_name.find(STRUCT_NAME_SEPARATOR) != -1:
+        split_msg = msg_name.split(STRUCT_NAME_SEPARATOR)
+
+        for part in split_msg:
+            if part:
+                processed_msg_name += part.title()
+            else:
+                print("error: remove first or last underscore")
+                return ''
+    else:
+        processed_msg_name += msg_name.title()
+
+    return processed_msg_name
+
+
+def find_context_pkg(typename: str):
+    context_pkg = ''
+
+    # checks whether interface exists
+    pkgs = list(interface.get_interface_packages().keys())
+
+    msg_interfaces = interface.get_message_interfaces(pkgs)   
+    for pkg, msgs in msg_interfaces.items():
+        if "msg/" + typename in msgs:
+            context_pkg += pkg
+    
+    if not context_pkg:
+        msg = typename + MESSAGE_FILE_EXTENSION
+
+        for root, dirs, files in walk(getcwd()):
+            if msg in files:
+                context_pkg += "enter_interface_name"
+            else:
+                pass # generate msg for it
+
+    return context_pkg
+
+
+def remove_namespace(typename: str):
+    namespace = ''
+    type_ = ''
+
+    parts = typename.split(SCOPE_RESOLUTION_OPR)
+
+    if len(parts) == 3:
+        namespace = parts[0]
+        type_ = generate_msg_name(parts[2])
+    
+    else:
+        print("illegal use of '::' operator!!")
+
+    return namespace, type_
+
 
 class xmlParser:
     def __init__(self, filename, namespace=""):
@@ -18,7 +86,7 @@ class xmlParser:
         self.namespace = namespace
         self.ns = None
         self.user_ns = ""
-        self.struct_name = ""
+        # self.struct_name = ""
 
         self.structs = {}
 
@@ -38,21 +106,30 @@ class xmlParser:
             self.ns = self.global_namespace.namespace(self.user_ns)
 
     def get_decls(self):
-        msg = MessageSpecification("msg")
-        not_primitive_type = []
+        # msg = MessageSpecification("msg")
+        # not_primitive_type = []
+
+        msg_name = ''
+        fields = []
+
         for decl in self.ns.declarations:
             # if decl.name == "MyConfigData":
             # if isinstance(decl, declarations.opaque_type_t):
             #     print("opaque")
             if isinstance(decl, declarations.class_t):
                 # print(f"declaration name = {decl.name}")
-                if str(decl.name).startswith("_"): continue
+                if str(decl.name).startswith(DECLARATION_PREFIX): continue
                 # print(f"decl type = {decl.decl_type}")
                 # MyConfigData = decl
                 temp = {decl.name: {}}
                 # self.struct_name = decl.name
-                msg.msg_name_ = decl.name.title()
-                msg.struct_name_ = decl.name
+                # msg.msg_name_ = generate_msg_name(decl.name)
+
+                msg_name += generate_msg_name(decl.name)
+                context_pkg = ''
+                # fields = []
+
+                # msg.struct_name_ = decl.name
 
                 for var in decl.variables():
                     # print(decl.variables())
@@ -60,37 +137,79 @@ class xmlParser:
                     # print("My name is: " + var.name)
                     # print("My type is: " + str(var.decl_type))
                     var_type = ""
-                    field = None
+
+                    field_name = var.name
+                    field_type = ''
 
                     # use isinstance() instead of type()
                     if type(var.decl_type) == declarations.cpptypes.int_t:
                         # declarations.is_integral(var.decl_type)
-                        var_type = "int64"
-                        field = Field(var.name, BasicType('int64'))
+                        # var_type = "int64"
+                        field_type += "int64"
+                        # var_type = Type("int64")
+                        # field = Field(type_=var_type, name=var.name)
+
+                        # field = Field(var.name, BasicType('int64'))
                     elif type(var.decl_type) == declarations.cpptypes.float_t:
-                        var_type = "float64"
-                        field = Field(var.name, BasicType('float64'))
+                        # var_type = "float64"
+                        # field = Field(var.name, BasicType('float64'))
+                        field_type += "float64"
+
+                        # var_type = Type("float64")
+                        # field = Field(type_=var_type, name=var.name)
                     elif type(var.decl_type) == declarations.cpptypes.bool_t:
-                        var_type = "bool"
-                        field = Field(var.name, BasicType('bool'))
-                    elif str(var.decl_type).startswith("std::vector<"):
-                        var_type = str(var.decl_type).strip("std::vector<").strip(">")
-                        if var_type+'64' in BASIC_TYPES:
-                            field = Field(var.name, BasicType(var_type+'64'), is_array=True)
-                            var_type += "64[]"
+                        # var_type = "bool"
+                        # field = Field(var.name, BasicType('bool'))
+                        field_type += "bool"
+
+                        # var_type = Type("bool")
+                        # field = Field(type_=var_type, name=var.name)
+                    elif str(var.decl_type).startswith(VECTOR_TYPE_PREFIX):
+                        # var_type = str(var.decl_type).strip(VECTOR_TYPE_PREFIX).strip(VECTOR_TYPE_SUFFIX)
+                        vector_type = str(var.decl_type).strip(VECTOR_TYPE_PREFIX).strip(VECTOR_TYPE_SUFFIX)
+                        # if var_type+'64' in BASIC_TYPES:
+                        # if field_type+'64' in PRIMITIVE_TYPES:
+                        #     field = Field(var.name, BasicType(var_type+'64'), is_array=True)
+                        #     var_type += "64[]"
+
+                        #     # var_type = Type(var_type)
+                        #     # field = Field(type_=var_type, name=var.name)
+                        # else:
+                        #     # assuming it to be namespaced typed
+                        #     field = Field(var.name, BasicType(var_type), is_array=True)
+                        #     var_type += "[]"
+
+                        #     # var_type = Type(var_type)
+                        #     # field = Field(type_=var_type, name=var.name)
+
+                        if (vector_type in PRIMITIVE_TYPES) or (vector_type + '64' in PRIMITIVE_TYPES): # example 64, it could be 8, 16, 32
+                            field_type += vector_type
+
                         else:
-                            # assuming it to be namespaced typed
-                            field = Field(var.name, BasicType(var_type), is_array=True)
-                            var_type += "[]"
+                            field_type += vector_type
+
+                            # assuming namespace typed struct
+                            if field_type.find(SCOPE_RESOLUTION_OPR):
+                                namespace, field_type = remove_namespace(field_type) 
+
+                            context_pkg += find_context_pkg(field_type)
+
+                        field_type += "[]"
 
                     else:
                         print(f"weird type found - {var.decl_type}")
+                        return
+                    
+                    field_type = Type(field_type)
+                    field = Field(type_=field_type, name=field_name)
+                    fields.append(field)
 
                     # print(type(var.decl_type))
                     temp[decl.name].update({var.name: var_type})
-                    msg.set_field(field)
+                    # msg.set_field(field)
 
                 self.structs.update(temp)
 
+        msg = MessageSpecification(pkg_name="enter_pkg_name", msg_name=msg_name, fields=fields, constants=[])
         # print(f"structs_found = {self.structs}")
         return self.structs, msg

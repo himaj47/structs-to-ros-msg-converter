@@ -11,10 +11,21 @@ from os import getcwd, walk
 from stm_converter.message_specification import MessageSpecification
 import stm_converter.message_specification
 
+
+def get_msg_fields(msg: MessageSpecification):
+    all_fields = {}
+
+    for field in msg.fields:
+        all_fields[field.name] = (field.type.type, field.type.is_array, field.type.array_size, field.type.pkg_name)
+
+    return all_fields
+
+
 class ROSMsgGenerator:
     def __init__(self, structs_found, header:str, namespace, msg: MessageSpecification=None):
         pathToTemplates = pkg_resources.files(stm_converter) / "resources/jinja_templates"
         self.env_ = Environment(loader=FileSystemLoader(pathToTemplates))
+
         self.structs_found_ = structs_found
         self.header_name_ = header
         self.ns = namespace
@@ -45,7 +56,7 @@ class ROSMsgGenerator:
         #         output.write(template.render(context))
         
         filename = self.msg.msg_name_ + ".msg"
-        self.msg_content_ = self.msg.get_fields()
+        self.msg_content_ = get_msg_fields(self.msg)
         # self.msg_filename_ = self.msg.msg_name_
 
         context = {"msg": self.msg_content_}
