@@ -24,7 +24,7 @@ def main():
     xml_parser = xmlParser(str(args.filename), namespace)
     structs_found, msg = xml_parser.get_decls()
 
-    msg_gen = ROSMsgGenerator(structs_found, filename, xml_parser.user_ns, msg=msg)
+    msg_gen = ROSMsgGenerator(structs_found, xml_parser.struct_name, filename, xml_parser.user_ns, msg=msg)
     if msg_gen.check_existance():
         print(f"{msg_gen.msg_filename_}.msg exists\ntype: {msg_gen.interface_type_}")
 
