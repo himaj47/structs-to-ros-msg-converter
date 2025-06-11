@@ -8,9 +8,10 @@ import ros2interface.api as interface
 # from os.path import splitext
 from os import getcwd, walk
 
-from stm_converter.message_specification import MessageSpecification
-import stm_converter.message_specification
+# from stm_converter.message_specification import MessageSpecification
+# import stm_converter.message_specification
 
+from rosidl_adapter.parser import MessageSpecification
 
 def get_msg_fields(msg: MessageSpecification):
     all_fields = {}
@@ -56,7 +57,7 @@ class ROSMsgGenerator:
         #     with open(filename, mode="w", encoding="utf-8") as output:
         #         output.write(template.render(context))
         
-        filename = self.msg.msg_name_ + ".msg"
+        filename = self.msg.msg_name + ".msg"
         self.msg_content_ = get_msg_fields(self.msg)
         # self.msg_filename_ = self.msg.msg_name_
 
