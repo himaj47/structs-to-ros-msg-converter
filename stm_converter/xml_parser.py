@@ -86,7 +86,7 @@ class xmlParser:
         self.namespace = namespace
         self.ns = None
         self.user_ns = ""
-        # self.struct_name = ""
+        self.struct_name = ""
 
         self.structs = {}
 
@@ -122,6 +122,7 @@ class xmlParser:
                 # print(f"decl type = {decl.decl_type}")
                 # MyConfigData = decl
                 temp = {decl.name: {}}
+                self.struct_name = decl.name
                 # self.struct_name = decl.name
                 # msg.msg_name_ = generate_msg_name(decl.name)
 
