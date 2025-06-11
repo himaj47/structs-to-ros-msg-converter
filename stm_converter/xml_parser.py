@@ -183,8 +183,11 @@ class xmlParser:
                         #     # var_type = Type(var_type)
                         #     # field = Field(type_=var_type, name=var.name)
 
-                        if (vector_type in PRIMITIVE_TYPES) or (vector_type + '64' in PRIMITIVE_TYPES): # example 64, it could be 8, 16, 32
+                        if vector_type in PRIMITIVE_TYPES: 
                             field_type += vector_type
+
+                        elif vector_type + '64' in PRIMITIVE_TYPES: # example 64, it could be 8, 16, 32
+                            field_type += vector_type + '64'
 
                         else:
                             field_type += vector_type
