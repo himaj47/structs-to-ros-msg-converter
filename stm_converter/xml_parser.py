@@ -61,10 +61,11 @@ def remove_namespace(typename: str):
     type_ = ''
 
     parts = typename.split(SCOPE_RESOLUTION_OPR)
+    print(f"typename = {typename}")
 
-    if len(parts) == 3:
+    if len(parts) == 2:
         namespace = parts[0]
-        type_ = generate_msg_name(parts[2])
+        type_ = generate_msg_name(parts[1])
     
     else:
         print("illegal use of '::' operator!!")
@@ -127,7 +128,7 @@ class xmlParser:
                 # msg.msg_name_ = generate_msg_name(decl.name)
 
                 msg_name += generate_msg_name(decl.name)
-                context_pkg = ''
+                context_pkg = None
                 # fields = []
 
                 # msg.struct_name_ = decl.name
@@ -196,7 +197,7 @@ class xmlParser:
                             if field_type.find(SCOPE_RESOLUTION_OPR):
                                 namespace, field_type = remove_namespace(field_type) 
 
-                            context_pkg += find_context_pkg(field_type)
+                            context_pkg = find_context_pkg(field_type)
 
                         field_type += "[]"
 
@@ -204,7 +205,7 @@ class xmlParser:
                         print(f"weird type found - {var.decl_type}")
                         return
                     
-                    field_type = Type(field_type)
+                    field_type = Type(field_type, context_package_name=context_pkg)
                     field = Field(type_=field_type, name=field_name)
                     fields.append(field)
 
