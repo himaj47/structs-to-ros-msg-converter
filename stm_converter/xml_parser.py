@@ -54,7 +54,7 @@ def find_context_pkg(typename: str):
             already_exists = True
     
     if not context_pkg:
-        msg = typename + ".msg"
+        msg = typename + MESSAGE_FILE_EXTENSION
         curr_dir = getcwd()
         for root, dirs, files in walk(curr_dir):
             if msg in files:
@@ -70,9 +70,9 @@ def find_context_pkg(typename: str):
 def get_fields(already_exists: bool, pkg_name: str, path:str , name: str):
     filename = ''
     if already_exists:
-        filename = f"{path}/{pkg_name}/msg/{name}.msg"
+        filename = f"{path}/{pkg_name}/msg/{name}" + MESSAGE_FILE_EXTENSION
     else:
-        filename = f"{path}/{name}.msg"
+        filename = f"{path}/{name}" + MESSAGE_FILE_EXTENSION
 
     print(f"filename = {filename}")
 
@@ -97,6 +97,29 @@ def remove_namespace(typename: str):
         print("illegal use of '::' operator!!")
 
     return namespace, type_
+
+def process_non_primitives(typename: str, is_array=False):
+    field_type = ''
+
+    if typename in PRIMITIVE_TYPES: 
+        field_type += typename
+
+    elif typename + '64' in PRIMITIVE_TYPES: # example 64, it could be 8, 16, 32
+        field_type += typename + '64'
+
+    else:
+        field_type += typename
+
+        # assuming namespace typed struct
+        if field_type.find(SCOPE_RESOLUTION_OPR):
+            namespace, field_type = remove_namespace(field_type) 
+
+        context_pkg, path, already_exists = find_context_pkg(field_type)
+        msg_fields = get_fields(already_exists=already_exists, pkg_name=context_pkg, path=path, name=field_type)
+
+    if is_array: field_type += "[]"
+
+    return context_pkg, msg_fields, field_type
 
 
 class xmlParser:
@@ -133,9 +156,6 @@ class xmlParser:
             self.ns = self.global_namespace.namespace(self.user_ns)
 
     def get_decls(self):
-        # msg = MessageSpecification("msg")
-        # not_primitive_type = []
-
         msg_name = ''
         fields = []
 
@@ -144,26 +164,14 @@ class xmlParser:
             # if isinstance(decl, declarations.opaque_type_t):
             #     print("opaque")
             if isinstance(decl, declarations.class_t):
-                # print(f"declaration name = {decl.name}")
                 if str(decl.name).startswith(DECLARATION_PREFIX): continue
-                # print(f"decl type = {decl.decl_type}")
-                # MyConfigData = decl
                 temp = {decl.name: {}}
                 self.struct_name = decl.name
-                # self.struct_name = decl.name
-                # msg.msg_name_ = generate_msg_name(decl.name)
 
                 msg_name += generate_msg_name(decl.name)
                 context_pkg = None
-                # fields = []
-
-                # msg.struct_name_ = decl.name
 
                 for var in decl.variables():
-                    # print(decl.variables())
-                    # print("decl_name: " + decl.name)
-                    # print("My name is: " + var.name)
-                    # print("My type is: " + str(var.decl_type))
                     var_type = ""
 
                     field_name = var.name
@@ -172,66 +180,21 @@ class xmlParser:
 
                     # use isinstance() instead of type()
                     if type(var.decl_type) == declarations.cpptypes.int_t:
-                        # declarations.is_integral(var.decl_type)
-                        # var_type = "int64"
                         field_type += "int64"
-                        # var_type = Type("int64")
-                        # field = Field(type_=var_type, name=var.name)
 
-                        # field = Field(var.name, BasicType('int64'))
                     elif type(var.decl_type) == declarations.cpptypes.float_t:
-                        # var_type = "float64"
-                        # field = Field(var.name, BasicType('float64'))
                         field_type += "float64"
 
-                        # var_type = Type("float64")
-                        # field = Field(type_=var_type, name=var.name)
                     elif type(var.decl_type) == declarations.cpptypes.bool_t:
-                        # var_type = "bool"
-                        # field = Field(var.name, BasicType('bool'))
                         field_type += "bool"
 
-                        # var_type = Type("bool")
-                        # field = Field(type_=var_type, name=var.name)
                     elif str(var.decl_type).startswith(VECTOR_TYPE_PREFIX):
-                        # var_type = str(var.decl_type).strip(VECTOR_TYPE_PREFIX).strip(VECTOR_TYPE_SUFFIX)
                         vector_type = str(var.decl_type).strip(VECTOR_TYPE_PREFIX).strip(VECTOR_TYPE_SUFFIX)
-                        # if var_type+'64' in BASIC_TYPES:
-                        # if field_type+'64' in PRIMITIVE_TYPES:
-                        #     field = Field(var.name, BasicType(var_type+'64'), is_array=True)
-                        #     var_type += "64[]"
-
-                        #     # var_type = Type(var_type)
-                        #     # field = Field(type_=var_type, name=var.name)
-                        # else:
-                        #     # assuming it to be namespaced typed
-                        #     field = Field(var.name, BasicType(var_type), is_array=True)
-                        #     var_type += "[]"
-
-                        #     # var_type = Type(var_type)
-                        #     # field = Field(type_=var_type, name=var.name)
-
-                        if vector_type in PRIMITIVE_TYPES: 
-                            field_type += vector_type
-
-                        elif vector_type + '64' in PRIMITIVE_TYPES: # example 64, it could be 8, 16, 32
-                            field_type += vector_type + '64'
-
-                        else:
-                            field_type += vector_type
-
-                            # assuming namespace typed struct
-                            if field_type.find(SCOPE_RESOLUTION_OPR):
-                                namespace, field_type = remove_namespace(field_type) 
-
-                            context_pkg, path, already_exists = find_context_pkg(field_type)
-                            msg_fields = get_fields(already_exists=already_exists, pkg_name=context_pkg, path=path, name=field_type)
-
-                        field_type += "[]"
+                        context_pkg, msg_fields, field_type = process_non_primitives(vector_type, True)
 
                     else:
                         print(f"weird type found - {var.decl_type}")
-                        return
+                        context_pkg, msg_fields, field_type = process_non_primitives(str(var.decl_type))
                     
                     field_type = Type(field_type, context_package_name=context_pkg)
                     field = Field(type_=field_type, name=field_name)
