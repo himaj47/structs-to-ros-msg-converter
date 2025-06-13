@@ -16,15 +16,32 @@ struct rclcpp::TypeAdapter<{{namespace}}::{{struct_name}}, <interface_name>::msg
     ros_message_type & destination)
   {
     {%- for field_name, field_specs in msg.items() %}
-    {%- if field_specs[1] %}
+    {%- if field_specs[-1] %}
+      {%- for name, specs in field_specs[-1].items() %}
+      {%- if specs[1] %}
+    destination.{{field_name}}.{{name}}.clear();
+    destination.{{field_name}}.{{name}}.reserve(source.{{field_name}}.{{name}}.size());
+
+    for (const auto& value : source.{{field_name}}.{{name}}) {
+      destination.{{field_name}}.{{name}}.push_back(value);
+    }
+
+      {%- else %}
+    destination.{{field_name}}.{{name}} = source.{{field_name}}.{{name}}
+      {%- endif %}
+      {%- endfor %}
+    {%- else %}
+      {%- if field_specs[1] and not field_specs[-1] %}
     destination.{{field_name}}.clear();
     destination.{{field_name}}.reserve(source.{{field_name}}.size());
 
     for (const auto& value : source.{{field_name}}) {
       destination.{{field_name}}.push_back(value);
     }
-    {%- else %}
+
+      {%- else %}
     destination.{{field_name}} = source.{{field_name}}
+      {%- endif %}
     {%- endif %}
     {%- endfor %}
   }
@@ -36,15 +53,32 @@ struct rclcpp::TypeAdapter<{{namespace}}::{{struct_name}}, <interface_name>::msg
     custom_type & destination)
   {
     {%- for field_name, field_specs in msg.items() %}
-    {%- if field_specs[1] %}
+    {%- if field_specs[-1] %}
+      {%- for name, specs in field_specs[-1].items() %}
+      {%- if specs[1] %}
+    destination.{{field_name}}.{{name}}.clear();
+    destination.{{field_name}}.{{name}}.reserve(source.{{field_name}}.{{name}}.size());
+
+    for (const auto& value : source.{{field_name}}.{{name}}) {
+      destination.{{field_name}}.{{name}}.push_back(value);
+    }
+
+      {%- else %}
+    destination.{{field_name}}.{{name}} = source.{{field_name}}.{{name}}
+      {%- endif %}
+      {%- endfor %}
+    {%- else %}
+      {%- if field_specs[1] and not field_specs[-1] %}
     destination.{{field_name}}.clear();
     destination.{{field_name}}.reserve(source.{{field_name}}.size());
 
     for (const auto& value : source.{{field_name}}) {
       destination.{{field_name}}.push_back(value);
     }
-    {%- else %}
+    
+      {%- else %}
     destination.{{field_name}} = source.{{field_name}}
+      {%- endif %}
     {%- endif %}
     {%- endfor %}
   }
