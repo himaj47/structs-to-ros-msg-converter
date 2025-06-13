@@ -7,7 +7,7 @@ struct rclcpp::TypeAdapter<{{namespace}}::{{struct_name}}, <interface_name>::msg
 {
   using is_specialized = std::true_type;
   using custom_type = {{namespace}}::{{struct_name}};
-  using ros_message_type = my_custom_interfaces::msg::{{msg_file_name}};
+  using ros_message_type = <interface_name>::msg::{{msg_file_name}};
 
   static
   void
@@ -27,7 +27,7 @@ struct rclcpp::TypeAdapter<{{namespace}}::{{struct_name}}, <interface_name>::msg
     }
 
       {%- else %}
-    destination.{{field_name}}.{{name}} = source.{{field_name}}.{{name}}
+    destination.{{field_name}}.{{name}} = source.{{field_name}}.{{name}};
       {%- endif %}
       {%- endfor %}
     {%- else %}
@@ -40,7 +40,7 @@ struct rclcpp::TypeAdapter<{{namespace}}::{{struct_name}}, <interface_name>::msg
     }
 
       {%- else %}
-    destination.{{field_name}} = source.{{field_name}}
+    destination.{{field_name}} = source.{{field_name}};
       {%- endif %}
     {%- endif %}
     {%- endfor %}
