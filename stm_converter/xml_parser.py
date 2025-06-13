@@ -3,9 +3,12 @@ from pygccxml import declarations
 from pygccxml import parser
 # from rosidl_parser.definition import 
 # from stm_converter.message_specification import MessageSpecification, BasicType, Field, BASIC_TYPES
-from rosidl_adapter.parser import MessageSpecification, Type, Field, PRIMITIVE_TYPES
-import ros2interface.api as interface
+from rosidl_adapter.parser import MessageSpecification, Type, Field
+from rosidl_adapter.parser import PRIMITIVE_TYPES, parse_message_file
 
+from stm_converter.ros_msg_generator import get_msg_fields
+
+import ros2interface.api as interface
 from os import getcwd, walk
 
 VECTOR_TYPE_PREFIX = "std::vector<"
@@ -34,26 +37,49 @@ def generate_msg_name(msg_name: str):
 
 
 def find_context_pkg(typename: str):
+
     context_pkg = ''
+    pathToFile = ''
+    already_exists = False
 
     # checks whether interface exists
-    pkgs = list(interface.get_interface_packages().keys())
+    interfaces = interface.get_interface_packages()
+    pkgs = list(interfaces.keys())
 
     msg_interfaces = interface.get_message_interfaces(pkgs)   
     for pkg, msgs in msg_interfaces.items():
         if "msg/" + typename in msgs:
             context_pkg += pkg
+            pathToFile = interfaces[pkg] + f"/share"
+            already_exists = True
     
     if not context_pkg:
-        msg = typename + MESSAGE_FILE_EXTENSION
-
-        for root, dirs, files in walk(getcwd()):
+        msg = typename + ".msg"
+        curr_dir = getcwd()
+        for root, dirs, files in walk(curr_dir):
             if msg in files:
                 context_pkg += "enter_interface_name"
+                pathToFile = curr_dir
             else:
                 pass # generate msg for it
+    
+    print(f"pathToFile = {pathToFile}")
+    return context_pkg, pathToFile, already_exists
 
-    return context_pkg
+
+def get_fields(already_exists: bool, pkg_name: str, path:str , name: str):
+    filename = ''
+    if already_exists:
+        filename = f"{path}/{pkg_name}/msg/{name}.msg"
+    else:
+        filename = f"{path}/{name}.msg"
+
+    print(f"filename = {filename}")
+
+    msg = parse_message_file(pkg_name=pkg_name, interface_filename=filename)
+    fields = get_msg_fields(msg)
+
+    return fields
 
 
 def remove_namespace(typename: str):
@@ -142,6 +168,7 @@ class xmlParser:
 
                     field_name = var.name
                     field_type = ''
+                    msg_fields = None
 
                     # use isinstance() instead of type()
                     if type(var.decl_type) == declarations.cpptypes.int_t:
@@ -197,7 +224,8 @@ class xmlParser:
                             if field_type.find(SCOPE_RESOLUTION_OPR):
                                 namespace, field_type = remove_namespace(field_type) 
 
-                            context_pkg = find_context_pkg(field_type)
+                            context_pkg, path, already_exists = find_context_pkg(field_type)
+                            msg_fields = get_fields(already_exists=already_exists, pkg_name=context_pkg, path=path, name=field_type)
 
                         field_type += "[]"
 
@@ -207,6 +235,7 @@ class xmlParser:
                     
                     field_type = Type(field_type, context_package_name=context_pkg)
                     field = Field(type_=field_type, name=field_name)
+                    field.msg_fields = msg_fields
                     fields.append(field)
 
                     # print(type(var.decl_type))
