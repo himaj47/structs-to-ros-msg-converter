@@ -50,7 +50,7 @@ def find_context_pkg(typename: str):
     for pkg, msgs in msg_interfaces.items():
         if "msg/" + typename in msgs:
             context_pkg += pkg
-            pathToFile = interfaces[pkg] + f"/share"
+            pathToFile = interfaces[pkg] + "/share"
             already_exists = True
     
     if not context_pkg:
