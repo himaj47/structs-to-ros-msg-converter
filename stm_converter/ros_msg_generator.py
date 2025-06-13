@@ -21,7 +21,7 @@ def get_msg_fields(msg: MessageSpecification):
     return all_fields
 
 
-class ROSMsgGenerator:
+class ROSMsgGenerator: 
     def __init__(self, structs_found, struct_name, header:str, namespace, msg: MessageSpecification=None):
         pathToTemplates = pkg_resources.files(stm_converter) / "resources/jinja_templates"
         self.env_ = Environment(loader=FileSystemLoader(pathToTemplates))
