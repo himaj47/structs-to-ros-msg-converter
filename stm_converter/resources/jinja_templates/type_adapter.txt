@@ -64,7 +64,7 @@ struct rclcpp::TypeAdapter<{{namespace}}::{{struct_name}}, <interface_name>::msg
     }
 
       {%- else %}
-    destination.{{field_name}}.{{name}} = source.{{field_name}}.{{name}}
+    destination.{{field_name}}.{{name}} = source.{{field_name}}.{{name}};
       {%- endif %}
       {%- endfor %}
     {%- else %}
@@ -77,7 +77,7 @@ struct rclcpp::TypeAdapter<{{namespace}}::{{struct_name}}, <interface_name>::msg
     }
     
       {%- else %}
-    destination.{{field_name}} = source.{{field_name}}
+    destination.{{field_name}} = source.{{field_name}};
       {%- endif %}
     {%- endif %}
     {%- endfor %}
