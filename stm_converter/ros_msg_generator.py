@@ -17,7 +17,13 @@ def get_msg_fields(msg: MessageSpecification):
     all_fields = {}
 
     for field in msg.fields:
-        all_fields[field.name] = (field.type.type, field.type.is_array, field.type.array_size, field.type.pkg_name)
+        all_fields[field.name] = [field.type.type, field.type.is_array, field.type.array_size, field.type.pkg_name]
+
+        try:
+            all_fields[field.name].append(field.msg_fields)
+        except:
+            field.msg_fields = {}
+            all_fields[field.name].append(field.msg_fields)
 
     return all_fields
 
